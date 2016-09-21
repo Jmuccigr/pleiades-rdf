@@ -178,10 +178,6 @@ class PleiadesGrapher(object):
                 DCTERMS['subject'],
                 Literal(tag)))
 
-        orig_url = str(subj).replace('https://', 'http://')
-        if orig_url and orig_url != str(subj):
-            g.add(subj, OWL['sameAs'], URIRef(orig_url))
-
         # Authors
         creators, contributors = principals(context)
 
@@ -193,19 +189,14 @@ class PleiadesGrapher(object):
                     username, url = self.authority.get(principal)
                     if username and not url:
                         url = "https://pleiades.stoa.org/author/" + username
-                        old_url = "http://pleiades.stoa.org/author/" + username
             if url:
                 pnode = URIRef(url)
-                opnode = URIRef(old_url)
             else:
                 pnode = BNode()
-                opnode = None
             g.add((subj, DCTERMS['creator'], pnode))
             if not url and p.get('fullname'):
                 g.add((pnode, RDF.type, FOAF['Person']))
                 g.add((pnode, FOAF['name'], Literal(p.get('fullname'))))
-                if opnode:
-                    g.add((pnode, OWL['sameAs'], opnode))
 
         for principal in contributors:
             p = user_info(context, principal)
@@ -215,19 +206,14 @@ class PleiadesGrapher(object):
                     username, url = self.authority.get(principal)
                     if username and not url:
                         url = "https://pleiades.stoa.org/author/" + username
-                        old_url = "http://pleiades.stoa.org/author/" + username
             if url:
                 pnode = URIRef(url)
-                opnode = URIRef(old_url)
             else:
                 pnode = BNode()
-                opnode = None
             g.add((subj, DCTERMS['contributor'], pnode))
             if not url and p.get('fullname'):
                 g.add((pnode, RDF.type, FOAF['Person']))
                 g.add((pnode, FOAF['name'], Literal(p.get('fullname'))))
-                if opnode:
-                    g.add((pnode, OWL['sameAs'], opnode))
 
         return g
 
@@ -264,16 +250,11 @@ class PlaceGrapher(PleiadesGrapher):
             purl = purl.replace(vh_root, '')
 
         for attestation in context.getAttestations():
-            turl = purl + "/" + attestation['timePeriod']
             g.add((
                 subj,
                 PLEIADES['during'],
-                URIRef(turl)))
-
-            orig_url = turl.replace('https://', 'http://')
-            if orig_url and orig_url != turl:
-                g.add(URIRef(turl), OWL['sameAs'], URIRef(orig_url))
-
+                URIRef(purl + "/" +
+                    attestation['timePeriod'])))
             if vocabs:
                 g = RegVocabGrapher(self.portal, self.request).concept(
                     'time-periods', periods[attestation['timePeriod']], g)
@@ -369,10 +350,6 @@ class PlaceGrapher(PleiadesGrapher):
             RDFS['comment'],
             Literal(context.Description())))
 
-        orig_url = context_page.replace('https://', 'http://')
-        if orig_url and orig_url != context_page:
-            g.add(context_subj, OWL['sameAs'], URIRef(orig_url))
-
         g = self.dcterms(context, g)
         g = self.provenance(context, g, context_subj)
 
@@ -392,10 +369,6 @@ class PlaceGrapher(PleiadesGrapher):
                 context_subj,
                 PLEIADES['hasFeatureType'],
                 URIRef(iurl)))
-
-            orig_url = iurl.replace('https://', 'http://')
-            if orig_url and orig_url != iurl:
-                g.add(URIRef(iurl), OWL['sameAs'], URIRef(orig_url))
 
             if vocabs:
                 g = RegVocabGrapher(self.portal, self.request).concept(
@@ -421,10 +394,6 @@ class PlaceGrapher(PleiadesGrapher):
             name_subj = URIRef(context_page + "/" + obj.getId())
             g.add((context_subj, PLEIADES['hasName'], name_subj))
             g.add((name_subj, RDF.type, PLEIADES['Name']))
-
-            orig_url = str(name_subj).replace('https://', 'http://')
-            if orig_url and orig_url != str(name_subj):
-                g.add(name_subj, OWL['sameAs'], URIRef(orig_url))
 
             g = self.dcterms(obj, g)
 
@@ -541,10 +510,6 @@ class PlaceGrapher(PleiadesGrapher):
             g = self.temporal(obj, g, locn_subj, vocabs=vocabs)
             g = self.provenance(obj, g, locn_subj)
             g = self.references(obj, g, locn_subj)
-
-            orig_url = str(locn_subj).replace('https://', 'http://')
-            if orig_url and orig_url != str(locn_subj):
-                g.add(locn_subj, OWL['sameAs'], URIRef(orig_url))
 
             dc_locn = obj.getLocation()
             gridbase = "http://atlantides.org/capgrids/"
@@ -673,10 +638,6 @@ class VocabGrapher(PleiadesGrapher):
             SKOS['inScheme'],
             URIRef(vurl)))
 
-        orig_url = turl.replace('https://', 'http://')
-        if orig_url and orig_url != turl:
-            g.add(URIRef(turl), OWL['sameAs'], URIRef(orig_url))
-
         return g
 
     def scheme(self, vocab):
@@ -691,10 +652,6 @@ class VocabGrapher(PleiadesGrapher):
             SKOS['ConceptScheme']))
 
         g = self.dcterms(vocab, g)
-
-        orig_url = vurl.replace('https://', 'http://')
-        if orig_url and orig_url != vurl:
-            g.add(URIRef(vurl), OWL['sameAs'], URIRef(orig_url))
 
         for key, term in vocab.items():
             g = self.concept(term, g)
@@ -746,10 +703,6 @@ class RegVocabGrapher(PleiadesGrapher):
             SKOS['inScheme'],
             URIRef(vurl)))
 
-        orig_url = turl.replace('https://', 'http://')
-        if orig_url and orig_url != turl:
-            g.add(URIRef(turl), OWL['sameAs'], URIRef(orig_url))
-
         return g
 
     def scheme(self, vocab_name):
@@ -773,10 +726,6 @@ class RegVocabGrapher(PleiadesGrapher):
             URIRef(vurl),
             DCTERMS['description'],
             Literal("Named time periods for the site.")))
-
-        orig_url = vurl.replace('https://', 'http://')
-        if orig_url and orig_url != vurl:
-            g.add(URIRef(vurl), OWL['sameAs'], URIRef(orig_url))
 
         key = vocab_name.replace('-', '_')
         vocab = get_vocabulary(key)
@@ -822,13 +771,11 @@ class PersonsGrapher(PleiadesGrapher):
                 username, uri = self.authority[u]
                 if username and not uri:
                     uri = "https://pleiades.stoa.org/author/" + username
-                    old_uri = "http://pleiades.stoa.org/author/" + username
                 if not uri:
                     continue
                 subj = URIRef(uri)
                 g.add((subj, RDF.type, FOAF['Person']))
                 g.add((subj, FOAF['name'], Literal(label)))
-                g.add((uri, OWL['sameAs'], old_uri))
 
         return g
 
